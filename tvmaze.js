@@ -3,8 +3,8 @@
 const $showsList = $("#showsList");
 const $episodesArea = $("#episodesArea");
 const $searchForm = $("#searchForm");
-const TVMAZE_SHOWS_SEARCH_URL = "http://api.tvmaze.com/search/shows";
-const TVMAZE_EPISODES_SEARCH_URL = "http://api.tvmaze.com/shows";
+const TVMAZE_BASE_URL = "http://api.tvmaze.com/";
+const GENERIC_IMAGE_URL = 'https://tinyurl.com/tv-missing'
 
 
 /** Given a search term, search for tv shows that match that query.
@@ -16,16 +16,19 @@ const TVMAZE_EPISODES_SEARCH_URL = "http://api.tvmaze.com/shows";
 
 async function getShowsByTerm(searchTerm) {
   // ADD: Remove placeholder & make request to TVMaze search shows API.
-
-  let response = await axios.get(`${TVMAZE_SHOWS_SEARCH_URL}`,
-  { params: { q: searchTerm } });
+  let response = await axios.get(
+    `${TVMAZE_BASE_URL}search/shows`, 
+    { params: { q: searchTerm } }
+  );
   console.log("response =", response);
 
-  let shows = response.data.map((showObj) => ({
-    id: showObj.show.id,
-    name: showObj.show.name,
-    summary: showObj.show.summary,
-    image: showObj.show.image.original
+  let shows = response.data.map((showAndScore) => ({ 
+    id: showAndScore.show.id,
+    name: showAndScore.show.name,
+    summary: showAndScore.show.summary,
+    image: (showAndScore.show.image !== null 
+      ? showAndScore.show.image.original 
+      : GENERIC_IMAGE_URL)
   }));
 
   console.log("shows: ", shows);
@@ -56,12 +59,13 @@ function populateShows(shows) {
   $showsList.empty();
 
   for (let show of shows) {
+    // console.log("show image url: ", show.image);
     const $show = $(
         `<div data-show-id="${show.id}" class="Show col-md-12 col-lg-6 mb-4">
          <div class="media">
            <img
-              src="http://static.tvmaze.com/uploads/images/medium_portrait/160/401704.jpg"
-              alt="Bletchly Circle San Francisco"
+              src="${show.image}"
+              alt="${show.name}"
               class="w-25 me-3">
            <div class="media-body">
              <h5 class="text-primary">${show.name}</h5>
@@ -73,6 +77,7 @@ function populateShows(shows) {
          </div>
        </div>
       `);
+      // console.log("show div code: ", show);
 
     $showsList.append($show);  }
 }
@@ -100,7 +105,22 @@ $searchForm.on("submit", async function (evt) {
  *      { id, name, season, number }
  */
 
-// async function getEpisodesOfShow(id) { }
+async function getEpisodesOfShow(showId) { 
+  let response = await axios.get(
+    `${TVMAZE_BASE_URL}shows/${showId}/episodes`
+  );
+  console.log("episode response =", response);
+
+  let episodes = response.data.map((episodeData) => ({ 
+    id: episodeData.id,
+    name: episodeData.name,
+    season: episodeData.season,
+    number: episodeData.number
+  }));
+
+  console.log("episodes: ", episodes);
+  return episodes;
+}
 
 /** Write a clear docstring for this function... */
 
