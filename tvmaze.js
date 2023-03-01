@@ -14,13 +14,22 @@ const TVMAZE_EPISODES_SEARCH_URL = "http://api.tvmaze.com/shows";
  *    (if no image URL given by API, put in a default image URL)
  */
 
-async function getShowsByTerm( /* term */) {
+async function getShowsByTerm(searchTerm) {
   // ADD: Remove placeholder & make request to TVMaze search shows API.
 
-  let response = await axios.get() `${TVMAZE_SEARCH_URL}/gifs/search`,
+  let response = await axios.get(`${TVMAZE_SHOWS_SEARCH_URL}`,
   { params: { q: searchTerm } });
+  console.log("response =", response);
 
-  return [
+  let shows = response.data.map((showObj) => ({
+    id: showObj.show.id,
+    name: showObj.show.name,
+    summary: showObj.show.summary,
+    image: showObj.show.image.original
+  }));
+
+  console.log("shows: ", shows);
+  return shows;
 
     // {
     //   id: 1767,
@@ -38,7 +47,6 @@ async function getShowsByTerm( /* term */) {
     //   image:
     //       "http://static.tvmaze.com/uploads/images/medium_portrait/147/369403.jpg"
     // }
-  ]
 }
 
 
