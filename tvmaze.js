@@ -2,6 +2,7 @@
 
 const $showsList = $("#showsList");
 const $episodesArea = $("#episodesArea");
+const $episodesList = $("#episodesList");
 const $searchForm = $("#searchForm");
 const TVMAZE_BASE_URL = "http://api.tvmaze.com/";
 const GENERIC_IMAGE_URL = 'https://tinyurl.com/tv-missing'
@@ -17,17 +18,17 @@ const GENERIC_IMAGE_URL = 'https://tinyurl.com/tv-missing'
 async function getShowsByTerm(searchTerm) {
   // ADD: Remove placeholder & make request to TVMaze search shows API.
   let response = await axios.get(
-    `${TVMAZE_BASE_URL}search/shows`, 
+    `${TVMAZE_BASE_URL}search/shows`,
     { params: { q: searchTerm } }
   );
   console.log("response =", response);
 
-  let shows = response.data.map((showAndScore) => ({ 
+  let shows = response.data.map((showAndScore) => ({
     id: showAndScore.show.id,
     name: showAndScore.show.name,
     summary: showAndScore.show.summary,
-    image: (showAndScore.show.image !== null 
-      ? showAndScore.show.image.original 
+    image: (showAndScore.show.image !== null
+      ? showAndScore.show.image.original
       : GENERIC_IMAGE_URL)
   }));
 
@@ -53,7 +54,7 @@ async function getShowsByTerm(searchTerm) {
 }
 
 
-/** Given list of shows, create markup for each and to DOM */
+/** Given list of shows, create markup for each and add to DOM */
 
 function populateShows(shows) {
   $showsList.empty();
@@ -91,7 +92,7 @@ async function searchForShowAndDisplay() {
   const term = $("#searchForm-term").val();
   const shows = await getShowsByTerm(term);
 
-  $episodesArea.hide();
+  //$episodesArea.hide();
   populateShows(shows);
 }
 
@@ -105,13 +106,13 @@ $searchForm.on("submit", async function (evt) {
  *      { id, name, season, number }
  */
 
-async function getEpisodesOfShow(showId) { 
+async function getEpisodesOfShow(showId) {
   let response = await axios.get(
     `${TVMAZE_BASE_URL}shows/${showId}/episodes`
   );
   console.log("episode response =", response);
 
-  let episodes = response.data.map((episodeData) => ({ 
+  let episodes = response.data.map((episodeData) => ({
     id: episodeData.id,
     name: episodeData.name,
     season: episodeData.season,
@@ -122,6 +123,29 @@ async function getEpisodesOfShow(showId) {
   return episodes;
 }
 
-/** Write a clear docstring for this function... */
+/** Given list of episodes, create markup for each and add to DOM */
 
-// function populateEpisodes(episodes) { }
+function populateEpisodes(episodes) {
+
+  for (let episode of episodes) {
+    console.log("episode: ",episode);
+    const $episode = $(`<li>${episode.name} (season ${episode.season}, number ${episode.number})</li>`);
+    console.log("episode li: ", episodeLi, "typeof episodeLi", typeof episodeLi);
+
+    $episodesList.append($episode);
+  }
+}
+
+async function searchForEpisodesAndDisplay(showId) {
+  const episodes = await getEpisodesOfShow(showId);
+  populateEpisodes(episodes);
+}
+
+$searchForm.on("submit", async function (evt) {
+  evt.preventDefault();
+  await searchForShowAndDisplay();
+});
+
+$showsList.on("click", function (evt) {
+  searchForEpisodesAndDisplay(evt.target.data);
+});
