@@ -6,6 +6,7 @@ const $episodesList = $("#episodesList");
 const $searchForm = $("#searchForm");
 const TVMAZE_BASE_URL = "http://api.tvmaze.com/";
 const GENERIC_IMAGE_URL = 'https://tinyurl.com/tv-missing'
+const $episodesButton = $(".media-body");
 
 
 /** Given a search term, search for tv shows that match that query.
@@ -62,7 +63,7 @@ function populateShows(shows) {
   for (let show of shows) {
     // console.log("show image url: ", show.image);
     const $show = $(
-        `<div data-show-id="${show.id}" class="Show col-md-12 col-lg-6 mb-4">
+      `<div data-show-id="${show.id}" class="Show col-md-12 col-lg-6 mb-4">
          <div class="media">
            <img
               src="${show.image}"
@@ -92,11 +93,12 @@ async function searchForShowAndDisplay() {
   const term = $("#searchForm-term").val();
   const shows = await getShowsByTerm(term);
 
-  //$episodesArea.hide();
   populateShows(shows);
 }
 
 $searchForm.on("submit", async function (evt) {
+  $episodesList.empty();
+  $episodesArea.attr("style", "display: none");
   evt.preventDefault();
   await searchForShowAndDisplay();
 });
@@ -112,40 +114,42 @@ async function getEpisodesOfShow(showId) {
   );
   console.log("episode response =", response);
 
-  let episodes = response.data.map((episodeData) => ({
+  return response.data.map((episodeData) => ({
     id: episodeData.id,
     name: episodeData.name,
     season: episodeData.season,
     number: episodeData.number
   }));
 
-  console.log("episodes: ", episodes);
-  return episodes;
+  //console.log("episodes: ", episodes);
+  //return episodes;
 }
 
-/** Given list of episodes, create markup for each and add to DOM */
+/** Given list of episodes, create description for each and add as list item to
+ * DOM */
 
 function populateEpisodes(episodes) {
 
   for (let episode of episodes) {
-    console.log("episode: ",episode);
+    //console.log("episode: ",episode);
     const $episode = $(`<li>${episode.name} (season ${episode.season}, number ${episode.number})</li>`);
-    console.log("episode li: ", episodeLi, "typeof episodeLi", typeof episodeLi);
+    //console.log("episode li: ", $episode);
 
     $episodesList.append($episode);
   }
 }
 
-async function searchForEpisodesAndDisplay(showId) {
+/** Given a show ID, get episodes of show and populate episode list
+*/
+
+async function getEpisodesAndDisplay(showId) { //could clear episodes list here
   const episodes = await getEpisodesOfShow(showId);
   populateEpisodes(episodes);
 }
 
-$searchForm.on("submit", async function (evt) {
-  evt.preventDefault();
-  await searchForShowAndDisplay();
-});
-
-$showsList.on("click", function (evt) {
-  searchForEpisodesAndDisplay(evt.target.data);
+$showsList.on("click", $episodesButton, function (evt) {
+  $episodesArea.removeAttr("style"); //WHY?!
+  //console.log("evt target: ", evt.target, "evt target closest ", evt.target.closest(".Show"));
+  const showId = Number($(evt.target).closest(".Show").data("show-id"));
+  getEpisodesAndDisplay(showId);
 });
